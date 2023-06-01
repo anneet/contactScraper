@@ -34,27 +34,35 @@ s.keep_alive = False # disable keep alive
 url = 'https://norcalpremier.com'
 start = '/clubs'
 
+testTeamURLS = contactScraper.getTeamUrls(start,url,s)
+testContacts = contactScraper.getContact(url+testTeamURLS[1],s)
+
+
 def test_greeting():
     contactScraper.greeting()
+    sys.stdout.write("\n")
 
-testTeamURLS = contactScraper.getTeamUrls(start,url,s)
 
 def test_TeamURLs():
-    sys.stdout.write("\n")
-    print(testTeamURLS[0:5])
+    assert len(testTeamURLS) == 5
 
 
 
 def test_getContacts():
-    testdic = contactScraper.getContact(url+testTeamURLS[1],s)
     sys.stdout.write("\n")
-    print(testdic)
+    assert type(testContacts) == 'dict'
+    assert len(testContacts) == 4
+
+def test_makeDF():
+    df = contactScraper.makeDF(testTeamURLS[0:5],url,s)
+    assert type(df) == 'dataframe'
 
 
 if __name__ == '__main__':
     test_greeting()
     test_TeamURLs()
     test_getContacts()
+    test_makeDF()
 #test = contactScraper.getTeamUrls()
 #testdic = contactScraper.makeDic(test[0:5])
 #testdf = contactScraper.makeDF(testdic)

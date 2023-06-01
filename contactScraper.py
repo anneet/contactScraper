@@ -147,7 +147,31 @@ def makeDic(teamURLs,aURL):
     sys.stdout.write("\n")
     return dic
 
-
+def newMakeDF(teamURLs,aURL,session):
+    output = pd.DataFrame(data={'Team Name':[],'Contact Name':[],'Contact Email':[], 'URL':[]})
+    sys.stdout.write("Getting contact information")
+    sys.stdout.write("\n")
+    sys.stdout.write("Please wait...")
+    sys.stdout.write("\n")
+    counter = 0
+    for idx,node in enumerate(teamURLs):
+        try:
+            df_dictionary = pd.DataFrame(data=getContact(aURL+node,session))
+            output = pd.concat([output, df_dictionary], ignore_index=True)
+            counter = output.shape[0]
+            sys.stdout.write("\rParsing team %i out of %i. Number of contacts is now %i" % (idx+1, len(teamURLs), counter))
+            time.sleep(random.randint(1,4))
+        except:
+            sys.stdout.write("\n")
+            random_sleep_except = random.uniform(240,360)
+            print("I've encountered an error! I'll pause for " +str(np.round(random_sleep_except/60)) + " minutes and try again \n")
+            time.sleep(random_sleep_except) #sleep the script for x minutes and....#
+            print('Okay time to continue!')
+            continue
+    sys.stdout.write("\n")
+    sys.stdout.write("\rAll contacts parsed")
+    sys.stdout.write("\n")
+    return output
 
 def makeDF(dic):
     for k in dic.keys():
