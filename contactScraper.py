@@ -35,6 +35,7 @@ from itertools import chain
 
 
 #requests.adapters.DEFAULT_RETRIES = 15 # increase retries number
+
 s = requests.session()
 s.verify = certifi.core.where()
 
@@ -71,17 +72,35 @@ teamStrainer = SoupStrainer(class_="team-name")
 
 
 
-def getURL(direc,aURL=url,session=s):
-    url = aURL + direc
+def getURL(direc,aURL,session): #gets the embedded URLs for a single page
+    url = aURL + direc #combine to make full URL
 
     req= session.get(url,timeout=(2,5))
     content=req.text
     soup=BeautifulSoup(content,'lxml')
-    newURLs = {x.get('href') for x in soup.find_all(URLext)}
+    newURLs = {x.get('href') for x in soup.find_all(URLext)} #find all embedded URLs on that page
     return newURLs
 
 
-def getContact(teamURL,session):
+def getTeamUrls(direc,aURL,session): #returns all team URLs (teams are within clubs)
+    clubs = getURL(direc,aURL,session) #get club URLs (first page URLs)
+    total = len(clubs)
+    teams = []
+    #dic = defaultdict(list)
+    sys.stdout.write("Getting Team URLs")
+    sys.stdout.write("\n")
+    for idx, element in enumerate(clubs):
+        sys.stdout.write("\rProgress: %i%%" % np.round((idx/total)*100,2))
+        sys.stdout.flush()
+        #time.sleep(random.randint(1,4))
+        teams += getURL(element,aURL,session) #gets all team URLs for a club page
+    sys.stdout.write("\r100% Complete!")
+    sys.stdout.write("\n")
+    sys.stdout.write("\rTotal teams found: %i" % len(teams))
+    return teams
+
+def getContact(teamURL,session): 
+    #gets all contact information on a team's page and puts them into a dictionary
     url=teamURL
     req=session.get(url,timeout=(2, 5))
     content=req.text
@@ -96,32 +115,13 @@ def getContact(teamURL,session):
         details['Contact Name'].append(name.text.strip())
         details['Team Name'].append(teamName.text.strip())
         details['URL'].append(url)
-        details['Contact Email'].append(decodeEmail(email['data-cfemail']))
+        details['Contact Email'].append(decodeEmail(email['data-cfemail'])) #decodes email
     return details
 
 
 
-def getTeamUrls():
-    clubs = getURL(start)
-    total = len(clubs)
-    teams = []
-    #dic = defaultdict(list)
-    sys.stdout.write("Getting Club URLs")
-    sys.stdout.write("\n")
-    for idx, element in enumerate(clubs):
-        sys.stdout.write("\rProgress: %i%%" % np.round((idx/total)*100,2))
-        sys.stdout.flush()
-        #time.sleep(random.randint(1,4))
-        teams += getURL(element)
-    sys.stdout.write("\r100% Complete!")
-    sys.stdout.write("\n")
-    sys.stdout.write("\rTotal teams found: %i" % len(teams))
-    return teams
 
-
-
-
-def makeDic(teamURLs):
+def makeDic(teamURLs,aURL):
     dic = defaultdict(list)
     sys.stdout.write("Getting contact information")
     sys.stdout.write("\n")
@@ -130,7 +130,7 @@ def makeDic(teamURLs):
     counter = 0
     for idx,node in enumerate(teamURLs):
         try:
-            for k, v in getContact(url+node,s).items():
+            for k, v in getContact(aURL+node,s).items():
                 dic[k].append(v)
                 counter += len(dic['Contact Name'])
                 sys.stdout.write("\rParsing team %i out of %i. Number of contacts is now %i" % (idx+1, len(teamURLs), counter))
@@ -146,7 +146,6 @@ def makeDic(teamURLs):
     sys.stdout.write("\rAll contacts parsed")
     sys.stdout.write("\n")
     return dic
-
 
 
 
@@ -186,7 +185,7 @@ def greeting():
 def main():
     greeting()
 
-    teamURls = getTeamUrls()
+    teamURls = getTeamUrls(start,url,s)
 
     sys.stdout.write("\n")
     random_sleep_except = random.uniform(240,360)
@@ -194,7 +193,7 @@ def main():
     time.sleep(random_sleep_except/60)
     print("Time to continue")
 
-    dic = makeDic(teamURls)
+    dic = makeDic(teamURls,url)
     df = makeDF(dic)
     sys.stdout.write("\rChecking for duplicates...")
     df = df.drop_duplicates(subset=['Team Name','Contact Name',	'Contact Email'	])
@@ -216,5 +215,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
