@@ -1,14 +1,12 @@
 
 import contactScraper
 
-from bs4 import BeautifulSoup
 
 import sys, os
 import certifi
 import pandas as pd
 import re
 import numpy as np
-from collections import defaultdict
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -16,10 +14,6 @@ from requests.packages.urllib3.util.retry import Retry
 
 import time
 import random
-
-from bs4 import SoupStrainer
-
-from itertools import chain
 
 #ctx = ssl.create_default_context()
 #ctx.check_hostname = False
@@ -40,12 +34,14 @@ s.keep_alive = False # disable keep alive
 
 
 
+url = 'https://norcalpremier.com'
+start = '/clubs'
 
 
 def main():
     contactScraper.greeting()
 
-    teamURls = contactScraper.getTeamUrls()
+    teamUrls = contactScraper.getTeamUrls(start,url,s)
 
     sys.stdout.write("\n")
     random_sleep_except = random.uniform(240,360)
@@ -53,8 +49,8 @@ def main():
     time.sleep(random_sleep_except/60)
     print("Time to continue")
 
-    dic = contactScraper.makeDic(teamURls)
-    df = contactScraper.makeDF(dic)
+    
+    df = contactScraper.makeDF(teamUrls,url,s)
     sys.stdout.write("\rChecking for duplicates...")
     df = df.drop_duplicates(subset=['Team Name','Contact Name',	'Contact Email'	])
     sys.stdout.write("\rDone")
@@ -75,5 +71,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

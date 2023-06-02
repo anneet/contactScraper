@@ -36,20 +36,7 @@ from itertools import chain
 
 #requests.adapters.DEFAULT_RETRIES = 15 # increase retries number
 
-s = requests.session()
-s.verify = certifi.core.where()
 
-retry = Retry(connect=3, backoff_factor=1)
-adapter = HTTPAdapter(max_retries=retry)
-s.mount('http://', adapter)
-s.mount('https://', adapter)
-
-s.keep_alive = False # disable keep alive
-
-
-
-url = 'https://norcalpremier.com'
-start = '/clubs'
 
 
 
@@ -119,35 +106,7 @@ def getContact(teamURL,session):
     return details
 
 
-
-
-def makeDic(teamURLs,aURL):
-    dic = defaultdict(list)
-    sys.stdout.write("Getting contact information")
-    sys.stdout.write("\n")
-    sys.stdout.write("Please wait...")
-    sys.stdout.write("\n")
-    counter = 0
-    for idx,node in enumerate(teamURLs):
-        try:
-            for k, v in getContact(aURL+node,s).items():
-                dic[k].append(v)
-                counter += len(dic['Contact Name'])
-                sys.stdout.write("\rParsing team %i out of %i. Number of contacts is now %i" % (idx+1, len(teamURLs), counter))
-                time.sleep(random.randint(1,4))
-        except:
-            sys.stdout.write("\n")
-            random_sleep_except = random.uniform(240,360)
-            print("I've encountered an error! I'll pause for " +str(np.round(random_sleep_except/60)) + " minutes and try again \n")
-            time.sleep(random_sleep_except) #sleep the script for x minutes and....#
-            print('Okay time to continue!')
-            continue
-    sys.stdout.write("\n")
-    sys.stdout.write("\rAll contacts parsed")
-    sys.stdout.write("\n")
-    return dic
-
-def newMakeDF(teamURLs,aURL,session):
+def makeDF(teamURLs,aURL,session):
     output = pd.DataFrame(data={'Team Name':[],'Contact Name':[],'Contact Email':[], 'URL':[]})
     sys.stdout.write("Getting contact information")
     sys.stdout.write("\n")
@@ -173,11 +132,6 @@ def newMakeDF(teamURLs,aURL,session):
     sys.stdout.write("\n")
     return output
 
-def makeDF(dic):
-    for k in dic.keys():
-        dic[k] = list(chain(*dic[k]))
-    return pd.DataFrame.from_dict(dic)
-
 
 
 
@@ -195,47 +149,3 @@ def greeting():
     sys.stdout.write("\n")
     sys.stdout.write("I'll let you know when the breaks occur. Now let's get to work! ")
     sys.stdout.write("\n")
-
-
-
-#test = getTeamUrls()
-#testdic = makeDic(test[0:5])
-#testdf = makeDF(testdic)
-#testdf
-
-
-
-
-def main():
-    greeting()
-
-    teamURls = getTeamUrls(start,url,s)
-
-    sys.stdout.write("\n")
-    random_sleep_except = random.uniform(240,360)
-    print("Pausing for " +str(np.round(random_sleep_except/60)) + " seconds. Thank you! \n")
-    time.sleep(random_sleep_except/60)
-    print("Time to continue")
-
-    dic = makeDic(teamURls,url)
-    df = makeDF(dic)
-    sys.stdout.write("\rChecking for duplicates...")
-    df = df.drop_duplicates(subset=['Team Name','Contact Name',	'Contact Email'	])
-    sys.stdout.write("\rDone")
-    sys.stdout.write("\n")
-
-    sys.stdout.write("\n")
-    sys.stdout.write("\rExporting to xlsx file to folder labeled")
-    newpath = os.path.abspath("exports") 
-    if not os.path.exists(newpath):
-        os.makedirs(newpath)
-    
-    path = os.path.abspath("exports/TeamContacts.xlsx")
-    df.to_excel(path)
-    sys.stdout.write("\rComplete! Thank you for your patience.")
-
-
-
-
-if __name__ == '__main__':
-    main()
