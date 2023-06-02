@@ -121,7 +121,7 @@ def getTeamUrls():
 
 
 
-def makeDic(teamURLs):
+def makeDic(teamURLs,url):
     dic = defaultdict(list)
     sys.stdout.write("Getting contact information")
     sys.stdout.write("\n")
